@@ -1,7 +1,9 @@
 # Databricks notebook source
 # MAGIC %pip install -r ../requirements.txt
 # MAGIC dbutils.library.restartPython()
+
 # COMMAND ----------
+
 import os
 from langchain_community.chat_models.databricks import ChatDatabricks
 
@@ -16,11 +18,19 @@ try:
     os.environ["DATABRICKS_TOKEN"] = context.apiUrl().get()
 except:
     pass
+
 # COMMAND ----------
 
 
-chunks_df = get_spark().read.table("msh.finreg.splitted_documents")
+chunks_df = get_spark().read.table("fflory.finreg.splitted_documents")
 chunks = chunks_df.toPandas()["text"].values.tolist()
+
+# COMMAND ----------
+
+for i in range(3):
+  print("="*70)
+  print(chunks[i])
+
 # COMMAND ----------
 
 llm_dbrx = ChatDatabricks(endpoint="databricks-dbrx-instruct", temperature=0.1)
@@ -69,7 +79,9 @@ Question: {question}
 
 Answer:
 """
+
 # COMMAND ----------
+
 qa_questions_df = build_qa_eval_dataset(
     chunks,
     llm_dbrx,
@@ -79,24 +91,29 @@ qa_questions_df = build_qa_eval_dataset(
 )
 
 display(qa_questions_df)  # noqa
+
 # COMMAND ----------
+
 get_spark().createDataFrame(qa_questions_df).write.mode("overwrite").saveAsTable(
-    "msh.finreg.qa_dataset"
+    "fflory.finreg.qa_dataset"
 )
+
 # COMMAND ----------
-mds_data_path = "/Volumes/msh/finreg/training/ift/mds/"
-jsonl_data_path = "/Volumes/msh/finreg/training/ift/jsonl/"
+
+mds_data_path = "/Volumes/fflory/finreg/training/ift/mds/"
+jsonl_data_path = "/Volumes/fflory/finreg/training/ift/jsonl/"
 
 
 ift_train_df, ift_val_df = (
-    get_spark().table("msh.finreg.qa_dataset").randomSplit([0.99, 0.01])
+    get_spark().table("fflory.finreg.qa_dataset").randomSplit([0.99, 0.01])
 )
-ift_train_df.write.mode("overwrite").saveAsTable("msh.finreg.qa_dataset_train")
-ift_val_df.write.mode("overwrite").saveAsTable("msh.finreg.qa_dataset_val")
+ift_train_df.write.mode("overwrite").saveAsTable("fflory.finreg.qa_dataset_train")
+ift_val_df.write.mode("overwrite").saveAsTable("fflory.finreg.qa_dataset_val")
+
 # COMMAND ----------
 
-ift_completions_train_df = prepare_ift_dataset("msh.finreg.qa_dataset_train", limit=-1)
-ift_completions_val_df = prepare_ift_dataset("msh.finreg.qa_dataset_val", limit=-1)
+ift_completions_train_df = prepare_ift_dataset("fflory.finreg.qa_dataset_train", limit=-1)
+ift_completions_val_df = prepare_ift_dataset("fflory.finreg.qa_dataset_val", limit=-1)
 
 # COMMAND ----------
 

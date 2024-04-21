@@ -42,7 +42,7 @@ get_dbutils().widgets.combobox(
     "base_model", "meta-llama/Llama-2-7b-hf", SUPPORTED_INPUT_MODELS, "base_model"
 )
 get_dbutils().widgets.text(
-    "data_path", "/Volumes/msh/finreg/training/ift/jsonl", "data_path"
+    "data_path", "/Volumes/fflory/finreg/training/ift/jsonl", "data_path"
 )
 
 get_dbutils().widgets.text("training_duration", "10ba", "training_duration")
@@ -52,6 +52,7 @@ get_dbutils().widgets.text(
     "",
     "custom_weights_path",
 )
+experiment_path
 
 # COMMAND ----------
 
@@ -65,7 +66,19 @@ if len(custom_weights_path) < 1:
 
 # COMMAND ----------
 
-mcli.initialize(api_key=get_dbutils().secrets.get(scope="msh", key="mosaic-token"))
+print("base_model:", base_model)
+print("data_path:", data_path)
+print("training_duration:", training_duration)
+print("learning_rate:", learning_rate)
+print("custom_weights_path:", custom_weights_path)
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+mcli.initialize(api_key=get_dbutils().secrets.get(scope="felix-flory", key="mosaic-token"))
 
 # COMMAND ----------
 
@@ -81,8 +94,8 @@ run = mcli.create_finetuning_run(
     learning_rate=learning_rate,
     experiment_tracker={
         "mlflow": {
-            "experiment_path": "/Shared/e2e_finreg_domain_adaptation_mosaic",
-            "model_registry_path": "msh.finreg.crr_llama7b_ift_v1",
+            "experiment_path": "/Shared/ff_e2e_finreg_domain_adaptation_mosaic",
+            "model_registry_path": "fflory.finreg.crr_llama7b_ift_v1",
         }
     },
     disable_credentials_check=True,
@@ -95,5 +108,3 @@ print(f"Started Run {run.name}. The run is in status {run.status}.")
 mcli.wait_for_run_status(run.name, RunStatus.RUNNING)
 for s in mcli.follow_run_logs(run.name):
     print(s)
-
-# COMMAND ----------
