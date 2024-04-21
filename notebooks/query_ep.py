@@ -100,6 +100,10 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
+import os
+
+# COMMAND ----------
+
 os.environ['OPENAI_API_KEY'] = dbutils.secrets.get("dbdemos", "azure-openai")
 os.environ['DATABRICKS_TOKEN'] = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)
 # host = "https://" + spark.conf.get("spark.databricks.workspaceUrl")
@@ -119,7 +123,7 @@ client = OpenAI(
         
 completions = client.completions.create(
   prompt='Write 3 reasons why you should train an AI model on domain specific data sets?',
-  model=["llam7b-ift-v1", "doan_mistral_7b_ift"][0],
+  model=["ift-mistral-7b-v0-1-vpdi1t", "llam7b-ift-v1", "doan_mistral_7b_ift"][0],
   max_tokens=128
 )
          

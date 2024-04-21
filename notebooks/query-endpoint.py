@@ -48,7 +48,7 @@ from pyspark.sql.types import ArrayType, StringType
 client = mlflow.deployments.get_deploy_client("databricks")
 
 chat_response = client.predict(
-    endpoint="doan_mistral_7b_ift",
+    endpoint="ift-mistral-7b-v0-1-vpdi1t ",
     inputs={
         "prompt": prompt + article,
         "temperature": 0.1,

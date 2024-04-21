@@ -74,10 +74,6 @@ print("custom_weights_path:", custom_weights_path)
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 mcli.initialize(api_key=get_dbutils().secrets.get(scope="felix-flory", key="mosaic-token"))
 
 # COMMAND ----------
@@ -95,7 +91,7 @@ run = mcli.create_finetuning_run(
     experiment_tracker={
         "mlflow": {
             "experiment_path": "/Shared/ff_e2e_finreg_domain_adaptation_mosaic",
-            "model_registry_path": "fflory.finreg.crr_llama7b_ift_v1",
+            "model_registry_path": "fflory.finreg.mistral7bv01_ift_v1",
         }
     },
     disable_credentials_check=True,
