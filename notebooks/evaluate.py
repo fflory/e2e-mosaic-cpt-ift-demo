@@ -67,11 +67,44 @@ Please answer the question using the given context:
 
 # COMMAND ----------
 
-llm_mistral = ChatDatabricks(endpoint="ff_finreg_llama7b_ift", temperature=0.1)
+# llm_mistral = ChatDatabricks(endpoint="ift-mistral-7b-v0-1-vpdi1t", temperature=0.1)
+# _ep="ift-mistral-7b-v0-1-vpdi1t"
+_ep = "mistral7b"#"databricks-mixtral-8x7b-instruct"
+llm_mistral = ChatDatabricks(endpoint=_ep, temperature=0.1)
 qa_chain_zeroshot = build_retrievalqa_zeroshot_chain(QA_TEMPLATE_ZEROSHOT, llm_mistral)
 qa_chain_with_ctx = build_retrievalqa_with_context_chain(
     QA_TEMPLATE_WITH_CTX, llm_mistral
 )
+
+# COMMAND ----------
+
+# # todo build input_prompts: List[Dict[str, str]]
+# # eval_results = evaluate_qa_chain(
+# #     eval_df=val_qa_eval_df,
+# #     columns=["context", "question"],
+# #     chain_to_evaluate=qa_chain_zeroshot,
+# #     run_name="CRR_Mistral_Baseline_ZeroShot",
+# # )
+# eval_df=val_qa_eval_df.head(3)
+# columns=["context", "question"]
+# input_prompts=eval_df[columns].to_dict(orient="records")
+# input_prompts[0]
+
+# COMMAND ----------
+
+# input_prompts=[{"question": 'What is the risk weight assigned to debt securities issued by multilateral development banks under Article 117(2)?',
+#                 "prompt": 'request What is the risk weight assigned to debt securities issued by multilateral development banks under Article 117(2)?'}]
+
+# COMMAND ----------
+
+# qa_chain_zeroshot.invoke('What is the risk weight assigned to debt securities issued by multilateral development banks under Article 117(2)?')
+
+# COMMAND ----------
+
+# chain=qa_chain_zeroshot
+# chain.with_retry(
+#         stop_after_attempt=100, wait_exponential_jitter=False
+#     ).batch(input_prompts, config={"max_concurrency": 4})
 
 # COMMAND ----------
 
@@ -117,7 +150,9 @@ display(eval_results.tables["eval_results_table"])  # noqa
 
 # COMMAND ----------
 
-llm_mistral = ChatDatabricks(endpoint="crr_mistral_ift_v1", temperature=0.1)
+# _ep="crr_mistral_ift_v1"
+_ep = "databricks-mixtral-8x7b-instruct"
+llm_mistral = ChatDatabricks(endpoint=_ep, temperature=0.1)
 qa_chain_zeroshot = build_retrievalqa_zeroshot_chain(QA_TEMPLATE_ZEROSHOT, llm_mistral)
 qa_chain_with_ctx = build_retrievalqa_with_context_chain(
     QA_TEMPLATE_WITH_CTX, llm_mistral

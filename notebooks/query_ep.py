@@ -1,25 +1,19 @@
 # Databricks notebook source
-# MAGIC %md
-# MAGIC at the end of this notebook is a working example
-
-# COMMAND ----------
-
-# MAGIC %pip install -r ../requirements.txt
+# MAGIC %pip install openai
 # MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
 
+import os
 
-
-# COMMAND ----------
-
-DATABRICKS_TOKEN = os.environ.get('DATABRICKS_TOKEN')
+# os.environ['OPENAI_API_KEY'] = dbutils.secrets.get("dbdemos", "azure-openai")
+os.environ['DATABRICKS_TOKEN'] = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)
 
 # COMMAND ----------
 
 from openai import OpenAI
-import os
-        
+
+
 DATABRICKS_TOKEN = os.environ.get('DATABRICKS_TOKEN')
         
 client = OpenAI(
@@ -29,26 +23,75 @@ client = OpenAI(
         
 completions = client.completions.create(
   prompt='Write 3 reasons why you should train an AI model on domain specific data sets?',
-  model="ff_finreg_llama7b_ift",
-  max_tokens=128
+  model="ift-mistral-7b-v0-1-vpdi1t",
+  max_tokens=528
 )
          
 print(completions.choices[0].text)
 
 # COMMAND ----------
 
-# MAGIC %pip install databricks_genai_inference
+# %sql
+# SELECT ai_query(
+#   'ift-mistral-7b-v0-1-vpdi1t',
+#   named_struct("prompt","What is Machine Learning?")
+#   -- returnType => schema_of_json('@outputJson')
+# )
 
 # COMMAND ----------
 
-dbutils.library.restartPython()
+# MAGIC %pip install -r ../requirements.txt
+# MAGIC dbutils.library.restartPython()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC
+
+# COMMAND ----------
+
+prompt = "what is machine learning"
+
+# COMMAND ----------
+
+import os
+import mlflow
+from mlflow.deployments import get_deploy_client
+import pandas as pd
+from pyspark.sql.functions import udf, pandas_udf
+from pyspark.sql.types import ArrayType, StringType
+
+client = mlflow.deployments.get_deploy_client("databricks")
+
+chat_response = client.predict(
+    endpoint="ift-mistral-7b-v0-1-vpdi1t ",
+    inputs={
+        "prompt": prompt,# + article,
+        "temperature": 0.1,
+        "max_tokens": 500,
+        "n": 1,
+    },
+)
+
+# COMMAND ----------
+
+print(chat_response)
+
+# COMMAND ----------
+
+# MAGIC %pip install databricks_genai_inference
+# MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
 
 
 from databricks_genai_inference import ChatSession
+# https://adb-984752964297111.11.azuredatabricks.net/serving-endpoints/databricks-mixtral-8x7b-instruct/invocations
 
-chat = ChatSession(model="ff_finreg_llama7b_ift", system_message="You are a helpful assistant.", max_tokens=128)
+# the custom serving endpoint is not compatible with the ChatSession inference format
+_ep = "ift-mistral-7b-v0-1-vpdi1t"
+# _ep = "databricks-mixtral-8x7b-instruct"
+chat = ChatSession(model=_ep, system_message="You are a helpful assistant.", max_tokens=128)
 chat.reply("Knock, knock!")
 chat.last # return "Hello! Who's there?"
 chat.reply("Guess who!")
@@ -63,68 +106,3 @@ chat.history
 #     {'role': 'assistant', 'content': "Okay, I'll play along! Is it a person, a place, or a thing?"}
 # ]
 
-
-# COMMAND ----------
-
-# MAGIC %pip install openai
-
-# COMMAND ----------
-
-dbutils.library.restartPython()
-
-# COMMAND ----------
-
-
-import os
-import openai
-from openai import OpenAI
-
-client = OpenAI(
-    api_key="dapi-your-databricks-token",
-    base_url="https://example.staging.cloud.databricks.com/serving-endpoints"
-)
-
-response = client.embeddings.create(
-  model="databricks-bge-large-en",
-  input="what is databricks"
-)
-
-
-# COMMAND ----------
-
-# MAGIC %pip install openai
-
-# COMMAND ----------
-
-dbutils.library.restartPython()
-
-# COMMAND ----------
-
-import os
-
-# COMMAND ----------
-
-os.environ['OPENAI_API_KEY'] = dbutils.secrets.get("dbdemos", "azure-openai")
-os.environ['DATABRICKS_TOKEN'] = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)
-# host = "https://" + spark.conf.get("spark.databricks.workspaceUrl")
-# workspace_url = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiUrl().get()
-
-# COMMAND ----------
-
-from openai import OpenAI
-import os
-        
-DATABRICKS_TOKEN = os.environ.get('DATABRICKS_TOKEN')
-        
-client = OpenAI(
-  api_key=DATABRICKS_TOKEN,
-  base_url="https://adb-984752964297111.11.azuredatabricks.net/serving-endpoints"
-)
-        
-completions = client.completions.create(
-  prompt='Write 3 reasons why you should train an AI model on domain specific data sets?',
-  model=["ift-mistral-7b-v0-1-vpdi1t", "llam7b-ift-v1", "doan_mistral_7b_ift"][0],
-  max_tokens=128
-)
-         
-print(completions.choices[0].text)
