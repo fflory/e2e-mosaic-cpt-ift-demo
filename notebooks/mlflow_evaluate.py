@@ -1,27 +1,26 @@
 # Databricks notebook source
-# MAGIC %pip install databricks-sdk==0.12.0 mlflow==2.10.1 textstat==0.7.3 tiktoken==0.5.1 evaluate==0.4.1 langchain==0.1.5 databricks-vectorsearch==0.22 transformers==4.30.2 torch==2.0.1 cloudpickle==2.2.1 pydantic==2.5.2
+# MAGIC %md
+# MAGIC see https://mlflow.org/docs/latest/python_api/mlflow.html#mlflow.evaluate
+# MAGIC
+# MAGIC ML runtime 15 has most packages except textstat
+
+# COMMAND ----------
+
+# MAGIC %pip install textstat # evaluate torch 
 # MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# %pip install mlflow==2.12.1
-# dbutils.library.restartPython()
-
-# COMMAND ----------
-
 import mlflow
-
-# COMMAND ----------
-
-display(spark.table("fflory.finreg.qa_dataset_output").limit(10))
-
-# COMMAND ----------
-
 import pyspark.sql.functions as F
 
 # COMMAND ----------
 
 df_qa_with_preds = spark.table("fflory.finreg.qa_dataset_output").withColumn("inputs", F.col("question"))
+
+# COMMAND ----------
+
+display(df_qa_with_preds.limit(4))
 
 # COMMAND ----------
 
@@ -81,13 +80,21 @@ print(professionalism)
 
 # COMMAND ----------
 
+evaluation_data = (
+    df_qa_with_preds
+    .limit(4)
+    .toPandas()
+)
+
+# COMMAND ----------
+
 from mlflow.deployments import set_deployments_target
 
 set_deployments_target("databricks")
 
 #This will automatically log all
 with mlflow.start_run(run_name="chatbot_rag") as run:
-    eval_results = mlflow.evaluate(data = df_qa_with_preds.toPandas(), # evaluation data,
+    eval_results = mlflow.evaluate(data = evaluation_data,
                                    model_type="question-answering", # toxicity and token_count will be evaluated   
                                    predictions="generated_answer", # prediction column_name from eval_df
                                    targets = "answer",
@@ -103,6 +110,14 @@ display(df_genai_metrics)
 
 # COMMAND ----------
 
+df_genai_metrics.columns
+
+# COMMAND ----------
+
+df_genai_metrics.loc[df_genai_metrics['toxicity/v1/score']*100>15]
+
+# COMMAND ----------
+
 import plotly.express as px
 px.histogram(df_genai_metrics, x="token_count", labels={"token_count": "Token Count"}, title="Distribution of Token Counts in Model Responses")
 
@@ -111,7 +126,3 @@ px.histogram(df_genai_metrics, x="token_count", labels={"token_count": "Token Co
 df_genai_metrics['toxicity'] = df_genai_metrics['toxicity/v1/score'] * 100
 fig = px.scatter(df_genai_metrics, x='toxicity', y='answer_correctness/v1/score', title='Toxicity vs Correctness', size=[10]*len(df_genai_metrics))
 fig.update_xaxes(tickformat=".2f")
-
-# COMMAND ----------
-
-
