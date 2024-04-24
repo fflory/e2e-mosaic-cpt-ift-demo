@@ -33,7 +33,6 @@ display(splitted_df)
 
 splitted_df.write.mode("overwrite").saveAsTable("fflory.finreg.splitted_documents")
 
-
 # COMMAND ----------
 
 cpt_df = get_spark().read.table("fflory.finreg.splitted_documents")
